@@ -1,0 +1,28 @@
+name: Integration tests
+on:
+  workflow_dispatch: {}
+  push: {}
+  schedule:
+    - cron: "0 5 * * *"
+
+jobs:
+  integration_tests:
+    name: Run integration tests
+    runs-on: ubuntu-latest
+    container: weaveworks/eksctl-build:ca9793ea88e16fd16acb7bad67280de65d027e93
+    env:
+      GOPRIVATE: github.com/weaveworks/aws-sdk-go-private
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Cache go-build and mod
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build/
+            ~/go/pkg/mod/
+          key: ${{ hashFiles('go.sum') }}
+      - name: Run integration tests
+        run: make integration-test TEST_V=1 SSH_KEY_PATH="/root/.ssh/${SSH_KEY_NAME}"
